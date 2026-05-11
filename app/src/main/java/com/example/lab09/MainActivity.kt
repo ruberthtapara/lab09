@@ -33,12 +33,13 @@ import com.example.lab09.ui.theme.Lab09Theme
 
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.lab09.data.PostApiService
 // Imports de Retrofit y Gson
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 // Import de tu tema (ajusta "com.example.lab09" al nombre de tu paquete)
-import com.example.lab09.ui.theme.Lab09Theme
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
