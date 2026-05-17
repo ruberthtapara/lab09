@@ -1,4 +1,4 @@
-package com.example.lab09
+package com.example.lab09.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
@@ -16,39 +16,28 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.lab09.data.PostApiService
-import com.example.lab09.data.PostModel
+import com.example.lab09.ui.viewmodel.PostViewModel
 
 @Composable
-fun ScreenPosts(navController: NavHostController, servicio: PostApiService) {
-    var listaPosts: SnapshotStateList<PostModel> = remember { mutableStateListOf() }
+fun ScreenPosts(navController: NavHostController, viewModel: PostViewModel) {
     LaunchedEffect(Unit) {
-        val listado = servicio.getUserPosts()
-        listado.forEach { listaPosts.add(it) }
+        viewModel.fetchPosts()
     }
 
-    LazyColumn (
-
-    ){
-        items(listaPosts) { item ->
+    LazyColumn {
+        items(viewModel.listaPosts) { item ->
             Row(modifier = Modifier.padding(8.dp)) {
                 Text(text = item.id.toString(), Modifier.weight(0.05f), textAlign = TextAlign.End)
-                Spacer(Modifier.padding(horizontal=1.dp))
+                Spacer(Modifier.padding(horizontal = 1.dp))
                 Text(text = item.title, Modifier.weight(0.7f))
                 IconButton(
                     onClick = {
                         navController.navigate("postsVer/${item.id}")
-                        Log.e("POSTS","ID = ${item.id}")
+                        Log.e("POSTS", "ID = ${item.id}")
                     },
                     Modifier.weight(0.1f)
                 ) {
@@ -60,38 +49,38 @@ fun ScreenPosts(navController: NavHostController, servicio: PostApiService) {
 }
 
 @Composable
-fun ScreenPost(navController: NavHostController, servicio: PostApiService, id: Int) {
-    var post by remember { mutableStateOf<PostModel?>(null) }
-    LaunchedEffect(Unit) {
-        val xpost = servicio.getUserPostById(id)
-        post = xpost.copy()?.takeIf { xpost.body != null }
+fun ScreenPost(navController: NavHostController, viewModel: PostViewModel, id: Int) {
+    LaunchedEffect(id) {
+        viewModel.fetchPostById(id)
     }
+    val post = viewModel.post
+
     Column(
         Modifier
             .padding(8.dp)
             .fillMaxSize()
     ) {
-        if (post != null){
+        if (post != null) {
             OutlinedTextField(
-                value = post!!.id.toString(),
+                value = post.id.toString(),
                 onValueChange = {},
                 label = { Text("id") },
                 readOnly = true
             )
             OutlinedTextField(
-                value = post!!.userId.toString(),
+                value = post.userId.toString(),
                 onValueChange = {},
                 label = { Text("userId") },
                 readOnly = true
             )
             OutlinedTextField(
-                value = post!!.title.toString(),
+                value = post.title,
                 onValueChange = {},
                 label = { Text("title") },
                 readOnly = true
             )
             OutlinedTextField(
-                value = post!!.body.toString(),
+                value = post.body,
                 onValueChange = {},
                 label = { Text("body") },
                 readOnly = true

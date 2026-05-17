@@ -33,12 +33,17 @@ import com.example.lab09.ui.theme.Lab09Theme
 
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.lab09.data.PostApiService
-// Imports de Retrofit y Gson
+import com.example.lab09.data.network.PostApiService
+import com.example.lab09.data.repository.PostRepository
+import com.example.lab09.ui.viewmodel.PostViewModel
+import com.example.lab09.ui.screens.ScreenPosts
+import com.example.lab09.ui.screens.ScreenPost
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-// Import de tu tema (ajusta "com.example.lab09" al nombre de tu paquete)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,10 +51,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Lab09Theme {
-                // Llamamos a la función principal que configuramos abajo
                 ProgPrincipal9()
             }
         }
+    }
+}
+
+class PostViewModelFactory(private val repository: PostRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(PostViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return PostViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
@@ -57,21 +71,22 @@ class MainActivity : ComponentActivity() {
 fun ProgPrincipal9() {
     val urlBase = "https://json-placeholder.mock.beeceptor.com/"
 
-    // Configuración de Retrofit
     val retrofit = Retrofit.Builder()
         .baseUrl(urlBase)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
+    
     val servicio = retrofit.create(PostApiService::class.java)
-    // Configuración del controlador de navegación
+    val repository = PostRepository(servicio)
+    val viewModel: PostViewModel = viewModel(factory = PostViewModelFactory(repository))
+    
     val navController = rememberNavController()
 
     Scaffold(
         topBar = { BarraSuperior() },
         bottomBar = { BarraInferior(navController) },
         content = { paddingValues ->
-            // Se pasan los paddingValues, el navController y el servicio al contenido
-            Contenido(paddingValues, navController, servicio)
+            Contenido(paddingValues, navController, viewModel)
         }
     )
 }
@@ -112,11 +127,12 @@ fun BarraInferior(navController: NavHostController) {
         )
     }
 }
+
 @Composable
 fun Contenido(
     pv: PaddingValues,
     navController: NavHostController,
-    servicio: PostApiService
+    viewModel: PostViewModel
 ) {
     Box(
         modifier = Modifier
@@ -125,46 +141,22 @@ fun Contenido(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "inicio" // Ruta de inicio
+            startDestination = "inicio"
         ) {
             composable("inicio") { ScreenInicio() }
 
-            composable("posts") { ScreenPosts(navController, servicio) }
+            composable("posts") { ScreenPosts(navController, viewModel) }
             composable("postsVer/{id}", arguments = listOf(
                 navArgument("id") { type = NavType.IntType} )
             ) {
-                ScreenPost(navController, servicio, it.arguments!!.getInt("id"))
+                val id = it.arguments?.getInt("id") ?: 0
+                ScreenPost(navController, viewModel, id)
             }
         }
     }
 }
+
 @Composable
 fun ScreenInicio() {
     Text("INICIO")
-}
-
-
-
-
-
-
-
-
-
-// Nota: Asegúrate de tener definidos los composables BarraSuperior,
-// BarraInferior y Contenido en tus otros archivos del proyecto.
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Lab09Theme {
-        Greeting("Android")
-    }
 }
